@@ -1,0 +1,5 @@
+<type>(scope): Short summary of the change
+
+Detailed description of the change:
+- Bullet points for important updates
+- Notes about implementation, dependencies, or side effects
