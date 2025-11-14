@@ -16,7 +16,7 @@ services:
       retries: 5
 
   prod:
-    image: microblog:1.0.0-prod
+    image: osay21/microblog
     container_name: microblog
     depends_on:
       - mysql
@@ -27,5 +27,16 @@ services:
       DATABASE_URL: mysql+pymysql://microblog:osay21@mysql/microblog
     restart: unless-stopped
 
+  test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_test
+    container_name: microblog-test
+    volumes:
+      - ./:/home/microblog  # mounts everything, including Makefile, app/, tests/, .pylintrc
+
+
 volumes:
   mysql_data:
+
+
