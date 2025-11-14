@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1.4
+FROM python:3.8-alpine
+
+RUN apk add --no-cache make bash
+
+WORKDIR /home/microblog
+
+# copy requirement files (scripts use them)
+COPY requirements/test.txt requirements/prod.txt requirements/
+
+# copy entrypoint
+COPY test.sh /entrypoint-test.sh
+RUN chmod +x /entrypoint-test.sh
+
+ENTRYPOINT ["/entrypoint-test.sh"]

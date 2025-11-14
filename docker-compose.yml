@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql/mysql-server:5.7
+    container_name: mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: microblog
+      MYSQL_USER: microblog
+      MYSQL_PASSWORD: osay21
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prod:
+    image: osay21/microblog
+    container_name: microblog
+    depends_on:
+      - mysql
+    ports:
+      - "8000:5000"
+    environment:
+      SECRET_KEY: my-secret-key
+      DATABASE_URL: mysql+pymysql://microblog:osay21@mysql/microblog
+    restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_test
+    container_name: microblog-test
+    volumes:
+      - ./:/home/microblog  # mounts everything, including Makefile, app/, tests/, .pylintrc
+
+
+volumes:
+  mysql_data:
+
+
