@@ -2,8 +2,8 @@ name: CD
 
 on:
   push:
-    branches: [ "main" ] 
-  workflow_dispatch:         
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -14,7 +14,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/microblog
+      IMAGE_NAME: microblog
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +24,7 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: osay21  
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract Docker metadata (tags & labels)
@@ -33,17 +33,15 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            # latest endast på main
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            # branch-namn (t.ex. continuous_delivery)
             type=ref,event=branch
-            # unik tagg per commit
             type=sha
 
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
-          context: Dockerfile_prod 
+          context: .                
+          file: Dockerfile_prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
