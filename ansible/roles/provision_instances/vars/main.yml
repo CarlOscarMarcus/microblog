@@ -1,11 +1,16 @@
 ---
 instances:
-    - name: appserver
+    - name: appserver1
       type: appserver
+      subdomain: appserver1
+    - name: appserver2
+      type: appserver
+      subdomain: appserver2
     - name: database
       type: database
     - name: loadbalancer
       type: loadbalancer
+      subdomain: www
 
 relative_names:
     - name: www # www.<domain>

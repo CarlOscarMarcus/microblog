@@ -1,2 +1,13 @@
 [local]
 localhost ansible_connection=local
+
+[service]
+appserver1.osay21.me ansible_user=azureuser
+appserver2.osay21.me ansible_user=azureuser
+
+[database]
+database.osay21.me ansible_user=azureuser
+
+[loadbalancer]
+loadbalancer.osay21.me ansible_user=azureuser
+

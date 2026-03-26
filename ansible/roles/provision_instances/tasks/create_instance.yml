@@ -8,6 +8,17 @@
     delegate_to: localhost
     register: output_ip_address
 
+- name: Create DNS record for each VM
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}"
+    relative_name: "{{ iname }}"
+    record_type: A
+    time_to_live: 300
+    records:
+      - entry: "{{ output_ip_address.state.ip_address }}"
+  delegate_to: localhost
+
 -   name: Dump public IP for VM which will be created
     debug:
         msg: "The public IP is {{ output_ip_address.state.ip_address }}."
@@ -55,9 +66,9 @@
         managed_disk_type: Standard_LRS
         os_disk_size_gb: 30
         image:
-            offer: Debian-10
+            offer: Debian-12
             publisher: Debian
-            sku: 10
+            sku: 12
             version: latest
         tags:
             StudentId: "{{ vmtags.StudentId }}"

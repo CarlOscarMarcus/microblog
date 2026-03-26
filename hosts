@@ -1,0 +1,9 @@
+[appservers]
+appserver1.osay21.me
+appserver2.osay21.me
+
+[loadbalancer]
+loadbalancer.osay21.me
+
+[database]
+database.osay21.me
