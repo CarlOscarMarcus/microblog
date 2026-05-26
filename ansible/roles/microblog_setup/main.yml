@@ -1,0 +1,51 @@
+---
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Ensure Docker is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Pull latest Microblog image
+  community.docker.docker_image:
+    name: carloscarmarcus/microblog
+    tag: "{{ microblog_version }}"
+    source: pull
+
+- name: Deploy Microblog container
+  community.docker.docker_container:
+    name: microblog
+    image: "carloscarmarcus/microblog:{{ microblog_version }}"
+    state: started
+    restart_policy: always
+    recreate: yes
+    env:
+      FLASK_APP: microblog
+      FLASK_ENV: production
+      APP_VERSION: "{{ microblog_version }}"
+      DB_HOST: "database"
+      DB_USER: root
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+      PROMETHEUS_MULTIPROC_DIR: /tmp
+    ports:
+      - "8000:5000"
+
+- name: Wait for Microblog to respond
+  uri:
+    url: http://localhost:8000/version
+    status_code: 200
+  register: version_check
+  until: version_check.status == 200
+  retries: 10
+  delay: 5
+
+- name: Fail if version mismatch
+  fail:
+    msg: "Deployment failed: wrong version"
+  when: version_check.json.version != microblog_version
