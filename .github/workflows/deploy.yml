@@ -27,10 +27,12 @@ jobs:
 
       - name: Deploy with Ansible
         run: |
-          ANSIBLE_PRIVATE_KEY_FILE=~/.ssh/devops \
+          export ANSIBLE_PRIVATE_KEY_FILE=~/.ssh/devops
+          export ANSIBLE_HOST_KEY_CHECKING=False
+
+          echo "Deploying Microblog to static inventory..."
           ansible-playbook ansible/microblog.yml \
             -i ansible/hosts \
             --extra-vars "microblog_version=${DOCKER_TAG}"
         env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
           DOCKER_TAG: ${{ inputs.docker_tag }}
