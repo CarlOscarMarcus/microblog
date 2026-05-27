@@ -1,9 +1,9 @@
-name: CD
+name: CD Pipeline
 
 on:
   push:
-    branches: ["master"]
-  workflow_dispatch:
+    tags:
+      - "*"
 
 jobs:
   tests:
@@ -17,10 +17,8 @@ jobs:
     name: Build & Push Docker image
     needs: security
     runs-on: ubuntu-latest
-
     env:
-      IMAGE_NAME: microblog
-
+      IMAGE_NAME: osay21/microblog
     steps:
       - uses: actions/checkout@v4
 
@@ -33,20 +31,27 @@ jobs:
           username: osay21
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract Docker metadata (tags & labels)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=true
-            type=sha
+            type=ref,event=tag
 
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile_prod
+          file: docker/Dockerfile_prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: docker
+    uses: ./.github/workflows/deploy.yml
+    with:
+      docker_tag: ${{ github.ref_name }}
+    secrets: inherit

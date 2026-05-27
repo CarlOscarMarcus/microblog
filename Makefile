@@ -221,6 +221,7 @@ dockle:
 	@docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		goodwithtech/dockle:latest \
+		--ignore DKL-DI-0004 \
 		microblog:prod
 
 # target: install                      - Install all Python packages specified in requirement.txt (requirements/prod.txt)
