@@ -16,7 +16,7 @@ services:
       retries: 5
 
   prod:
-    image: osay21/microblog
+    image: osay21/microblog:1.0.1-prod
     container_name: microblog
     depends_on:
       - mysql
