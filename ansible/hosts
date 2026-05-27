@@ -1,13 +1,20 @@
 [local]
 localhost ansible_connection=local
 
-[service]
-appserver1.osay21.me ansible_user=azureuser
-appserver2.osay21.me ansible_user=azureuser
+[appserver]
+appserver1.osay21.me
+appserver2.osay21.me
 
 [database]
-database.osay21.me ansible_user=azureuser
+database.osay21.me
 
 [loadbalancer]
-loadbalancer.osay21.me ansible_user=azureuser
+loadbalancer.osay21.me
 
+[devops:children]
+appserver
+database
+loadbalancer
+
+[devops:vars]
+ansible_ssh_private_key_file=~/.ssh/devops

@@ -15,14 +15,14 @@
 
 -   name: add instance to hosts
     add_host:
-        name: "{{ item.tags.PublicIP }}"
+        name: "{{ item.name | regex_replace('-VM$', '') }}.{{ domain_name }}"
         groups:
-        - "{{ item.name[0:-3] }}" # instance name from provision_instances/vars/main.yml
-        - "{{ item.tags.Type }}" # instance type from provision_instances/vars/main.yml
+        - "{{ item.name | regex_replace('-VM$', '') }}" 
+        - "{{ item.tags.Type }}"
         - devops
-        # the keys below are dynamic and can have any name and value. A way to add data to the host which can be read later
-        iname: "{{ item.name[0:-3] }}"
+        iname: "{{ item.name | regex_replace('-VM$', '') }}"
         itype: "{{ item.tags.Type }}"
+        ansible_host: "{{ item.tags.PublicIP }}"
     with_items: "{{ az_facts.vms }}"
     when: item.tags.PublicIP is defined and item.power_state == "running"
 

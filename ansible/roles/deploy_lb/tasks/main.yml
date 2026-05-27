@@ -1,59 +1,99 @@
 ---
--   name: Install packages
-    apt:
-        name: "{{ packages }}"
-        state: present
+- name: Update apt cache
+  apt:
+    update_cache: yes
 
--   name: Check if certificate already exists.
-    stat:
-        path: /etc/letsencrypt/live/{{ domain_name }}/cert.pem
-    register: letsencrypt_cert
+# ----------------------------
+# INSTALL NGINX
+# ----------------------------
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
 
--   name: debug msg to show if cert exist
-    debug: msg="{{ letsencrypt_cert.stat.exists }}"
+- name: Ensure nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
 
--   name: Stop services to allow certbot to generate a cert.
-    service:
-      name: nginx
-      state: stopped
-    when: not letsencrypt_cert.stat.exists
+# ----------------------------
+# CLEAN DEFAULT SITE (IMPORTANT)
+# ----------------------------
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
 
--   name: Generate new certificate if one doesn't exist.
-    when: not letsencrypt_cert.stat.exists
-    command:
-      cmd: "certbot certonly --standalone --noninteractive --expand --agree-tos --email {{ admin_email }} -d {{ domain_name }} -d www.{{ domain_name }}"
+# ----------------------------
+# DEPLOY LOAD BALANCER CONFIG
+# ----------------------------
+- name: Deploy nginx config (HTTP only)
+  template:
+    src: load-balancer-http.conf.j2
+    dest: /etc/nginx/sites-available/load-balancer.conf
+  when: (enable_tls | default(false)) == false
+  notify: Restart nginx
 
--   name: Remove default conf
-    file:
-        state: absent
-        path: /etc/nginx/sites-enabled/default
+- name: Deploy nginx config (HTTPS)
+  template:
+    src: load-balancer-https.conf.j2
+    dest: /etc/nginx/sites-available/load-balancer.conf
+  when: (enable_tls | default(false)) == true
+  notify: Restart nginx
 
--   name: Template nginx config to server
-    copy:
-        src: nginx.conf
-        dest: /etc/nginx/nginx.conf
-        mode: "644"
+# ----------------------------
+# CERTBOT (OPTIONAL)
+# ----------------------------
+- name: Install snapd (required for certbot)
+  apt:
+    name: snapd
+    state: present
 
+- name: Install certbot via snap
+  command: snap install --classic certbot
+  args:
+    creates: /snap/bin/certbot
 
--   name: Template nginx site config to server
-    template:
-        src: load-balancer.conf.j2
-        dest: /etc/nginx/sites-available/load-balancer.conf
-        mode: "644"
-    notify:
-    - Restart nginx
+- name: Symlink certbot
+  file:
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
 
--   name: Link site to enabled
-    file:
-        state: link
-        force: yes
-        src: /etc/nginx/sites-available/load-balancer.conf
-        path: /etc/nginx/sites-enabled/load-balancer.conf
-    notify:
-    - Restart nginx
+- name: Check if certificate exists
+  stat:
+    path: /etc/letsencrypt/live/{{ domain_name }}/cert.pem
+  register: letsencrypt_cert
 
--   name: Start services after cert has been generated.
-    service:
-      name: nginx
-      state: started
-    when: not letsencrypt_cert.stat.exists
+- name: Stop nginx for certbot (standalone mode)
+  service:
+    name: nginx
+    state: stopped
+  when: enable_tls | default(false)
+
+- name: Generate SSL certificate
+  command: >
+    certbot certonly --standalone --noninteractive --agree-tos
+    --email {{ admin_email }}
+    -d {{ domain_name }} -d www.{{ domain_name }}
+  when: enable_tls | default(false)
+
+- name: Start nginx again
+  service:
+    name: nginx
+    state: started
+
+# ----------------------------
+# FINAL VALIDATION
+# ----------------------------
+- name: Test nginx config
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+
+- name: Reload nginx
+  service:
+    name: nginx
+    state: reloaded
+  when: nginx_test.rc == 0

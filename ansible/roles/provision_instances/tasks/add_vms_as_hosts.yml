@@ -2,7 +2,7 @@
 ---
 - name: Create hosts with instance data
   add_host:
-    hostname: "{{ item.name }}"
+    hostname: "{{ item.name }}.{{ domain_name }}"
     groups:
         devops
     # the keys below are dynamic and can have any name and value. A way to add data to the host which can be read later

@@ -12,7 +12,7 @@ vmtags:
     StudentId: osay21 
 
 
-pub_ssh_key_location: '/home/carloscarmarcus/.ssh/devops.pub'
+pub_ssh_key_location: '/home/osay21/.ssh/devops.pub'
 
 
 server_user: "deploy"

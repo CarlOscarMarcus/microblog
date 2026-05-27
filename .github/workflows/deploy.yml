@@ -1,0 +1,36 @@
+name: Deploy microblog
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: echo "DOCKER_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops
+          chmod 600 ~/.ssh/devops
+
+      - name: Deploy with Ansible
+        run: |
+          ANSIBLE_PRIVATE_KEY_FILE=~/.ssh/devops \
+          ansible-playbook ansible/microblog.yml \
+            -i ansible/hosts \
+            --extra-vars "microblog_version=${DOCKER_TAG}"
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
