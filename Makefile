@@ -188,6 +188,11 @@ clean: clean-py clean-cov
 	find . -name '*.log*' -exec rm -fr {} +
 
 
+# target: bandit                       - Run bandit security linter on app/
+.PHONY: bandit
+bandit:
+	@bandit -r app
+
 
 # target: install                      - Install all Python packages specified in requirement.txt (requirements/prod.txt)
 .PHONY: install
