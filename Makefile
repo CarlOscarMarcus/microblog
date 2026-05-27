@@ -194,7 +194,7 @@ bandit:
 	@bandit -r app
 
 
-# target: security-scan - Run Trivy filesystem + docker image scan (HIGH/CRITICAL only)
+# target: security-scan - Run Trivy filesystem + local docker image scan (HIGH/CRITICAL only)
 .PHONY: security-scan
 security-scan:
 	docker run --rm -v $(CURDIR):/repo -w /repo aquasec/trivy:latest fs \
@@ -204,25 +204,25 @@ security-scan:
 		--no-progress \
 		--skip-dirs .venv,venv,node_modules \
 		.
-
+	@docker build -f docker/Dockerfile_prod -t microblog:local .
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
 		aquasec/trivy:latest image \
 		--scanners vuln,secret,misconfig \
 		--severity HIGH,CRITICAL \
 		--exit-code 1 \
 		--no-progress \
-		osay21/microblog:latest
+		microblog:local
 
 
-# target: dockle                      - Run Dockle security scan on production image
+# target: dockle                      - Run Dockle security scan on local production image
 .PHONY: dockle
 dockle:
-	@docker build --no-cache -f docker/Dockerfile_prod -t microblog:prod .
+	@docker build -f docker/Dockerfile_prod -t microblog:local .
 	@docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		goodwithtech/dockle:latest \
 		--ignore DKL-DI-0004 \
-		microblog:prod
+		microblog:local
 
 # target: install                      - Install all Python packages specified in requirement.txt (requirements/prod.txt)
 .PHONY: install
