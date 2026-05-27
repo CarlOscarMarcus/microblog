@@ -77,7 +77,7 @@ help:
 .PHONY: add-ssh
 add-ssh:
 	eval `ssh-agent -s`
-	ssh-add /home/carloscarmarcus/.ssh/devops
+	ssh-add /home/osay21/.ssh/devops
 
 
 

@@ -33,6 +33,7 @@
 -   hosts: devops
     connection: local # Keep ansible from open ssh connection
     gather_facts: False
+    throttle: 1
     # no_log: True
     collections:
         - azure.azcollection

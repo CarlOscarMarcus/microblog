@@ -31,7 +31,7 @@
 -   name: Create user
     user:
         name: "{{ server_user }}"
-        password: "{{ server_user_pass }}"
+        password: "{{ server_user_pass | password_hash('sha512') }}"
         state: present
         shell: /bin/bash
         groups: "{{ server_user_groups }}"
@@ -84,4 +84,4 @@
         state: absent
         force: yes
         remove: yes
-    # ignore_errors: yes
+    ignore_errors: yes

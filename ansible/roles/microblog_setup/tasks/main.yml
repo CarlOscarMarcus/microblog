@@ -1,0 +1,80 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+# ----------------------------
+# INSTALL DOCKER
+# ----------------------------
+- name: Install Docker
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+    state: present
+
+- name: Ensure Docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+# ----------------------------
+# USER PERMISSIONS FIX
+# ----------------------------
+- name: Add deploy user to docker group
+  user:
+    name: deploy
+    groups: docker
+    append: yes
+
+# ----------------------------
+# PULL APPLICATION IMAGE
+# ----------------------------
+- name: Pull Microblog image
+  community.docker.docker_image:
+    name: osay21/microblog
+    tag: "{{ microblog_version }}"
+    source: pull
+
+# ----------------------------
+# DEPLOY CONTAINER
+# ----------------------------
+- name: Deploy Microblog container
+  community.docker.docker_container:
+    name: microblog
+    image: "osay21/microblog:{{ microblog_version }}"
+    state: started
+    restart_policy: always
+    recreate: true
+    stop_timeout: 30
+    env:
+      FLASK_APP: microblog
+      FLASK_ENV: production
+      APP_VERSION: "{{ microblog_version }}"
+      DB_HOST: "database"
+      DB_USER: root
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+      PROMETHEUS_MULTIPROC_DIR: /tmp
+    ports:
+      - "8000:5000"
+
+# ----------------------------
+# HEALTH CHECK
+# ----------------------------
+- name: Wait for Microblog to respond
+  uri:
+    url: http://localhost:8000/
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 5
+
+# ----------------------------
+# CLEANUP OLD IMAGES
+# ----------------------------
+- name: Remove unused Docker images
+  community.docker.docker_prune:
+    images: true

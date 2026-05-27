@@ -11,5 +11,4 @@ instances:
 
 relative_names:
     - name: www # www.<domain>
-    - name: "@" # so <domain> works as a URL. Otherwise only www.<domain> would work.
-    - name: "loadbalancer" # loadbalancer.<domain>
+    - name: "@" # so <domain> works as a URL.

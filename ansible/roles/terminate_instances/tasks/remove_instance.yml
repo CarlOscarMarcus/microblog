@@ -1,5 +1,9 @@
 # Terminate All Instances
 ---
+- name: Set iname if not defined
+  set_fact:
+    iname: "{{ (iname is defined) | ternary(iname, inventory_hostname | split('.') | first) }}"
+
 -   name: Remove a VM and all resources that were autocreated
     azure_rm_virtualmachine:
         resource_group: "{{ resource_group }}"
