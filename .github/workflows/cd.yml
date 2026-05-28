@@ -1,20 +1,24 @@
-name: CD
+name: CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    tags:
+      - "*"
 
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
 
+  security:
+    needs: tests
+    uses: ./.github/workflows/security.yml
+
   docker:
     name: Build & Push Docker image
-    needs: tests
+    needs: security
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: microblog
+      IMAGE_NAME: osay21/microblog
     steps:
       - uses: actions/checkout@v4
 
@@ -24,24 +28,30 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: osay21  
+          username: osay21
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract Docker metadata (tags & labels)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=ref,event=branch
-            type=sha
+            type=raw,value=latest,enable=true
+            type=ref,event=tag
 
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
-          context: .                
-          file: Dockerfile_prod
+          context: .
+          file: docker/Dockerfile_prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: docker
+    uses: ./.github/workflows/deploy.yml
+    with:
+      docker_tag: ${{ github.ref_name }}
+    secrets: inherit

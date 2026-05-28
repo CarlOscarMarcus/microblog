@@ -188,6 +188,41 @@ clean: clean-py clean-cov
 	find . -name '*.log*' -exec rm -fr {} +
 
 
+# target: bandit                       - Run bandit security linter on app/
+.PHONY: bandit
+bandit:
+	@bandit -r app
+
+
+# target: security-scan - Run Trivy filesystem + local docker image scan (HIGH/CRITICAL only)
+.PHONY: security-scan
+security-scan:
+	docker run --rm -v $(CURDIR):/repo -w /repo aquasec/trivy:latest fs \
+		--scanners vuln,secret,misconfig \
+		--severity HIGH,CRITICAL \
+		--exit-code 1 \
+		--no-progress \
+		--skip-dirs .venv,venv,node_modules \
+		.
+	@docker build -f docker/Dockerfile_prod -t microblog:local .
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+		aquasec/trivy:latest image \
+		--scanners vuln,secret,misconfig \
+		--severity HIGH,CRITICAL \
+		--exit-code 1 \
+		--no-progress \
+		microblog:local
+
+
+# target: dockle                      - Run Dockle security scan on local production image
+.PHONY: dockle
+dockle:
+	@docker build -f docker/Dockerfile_prod -t microblog:local .
+	@docker run --rm \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		goodwithtech/dockle:latest \
+		--ignore DKL-DI-0004 \
+		microblog:local
 
 # target: install                      - Install all Python packages specified in requirement.txt (requirements/prod.txt)
 .PHONY: install

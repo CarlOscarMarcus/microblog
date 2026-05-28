@@ -42,6 +42,13 @@
   when: (enable_tls | default(false)) == true
   notify: Restart nginx
 
+- name: Enable nginx site
+  file:
+    src: /etc/nginx/sites-available/load-balancer.conf
+    dest: /etc/nginx/sites-enabled/load-balancer.conf
+    state: link
+  notify: Restart nginx
+
 # ----------------------------
 # CERTBOT (OPTIONAL)
 # ----------------------------

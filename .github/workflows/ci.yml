@@ -1,8 +1,17 @@
-name: CI
+name: CI Pipeline
+
 on:
-  push: { branches: ["*"] }
-  pull_request: { branches: ["*"] }
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+  pull_request:
 
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
+
+  security:
+    needs: tests
+    uses: ./.github/workflows/security.yml

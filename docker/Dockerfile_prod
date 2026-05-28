@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM python:3.8-alpine
+FROM python:3.12-alpine
 RUN adduser -D microblog
 
 WORKDIR /home/microblog
@@ -10,10 +10,7 @@ COPY migrations migrations
 COPY requirements requirements
 COPY requirements.txt microblog.py boot.sh ./
 
-RUN <<-EOF
-    python -m venv .venv
-    .venv/bin/pip3 install -r requirements.txt
-EOF
+RUN pip install --no-cache-dir -r requirements.txt
 
 ENV FLASK_APP=microblog.py
 
@@ -25,4 +22,8 @@ EOF
 USER microblog
 
 EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -qO- http://127.0.0.1:5000/ || exit 1
+
 ENTRYPOINT ["./boot.sh"]
