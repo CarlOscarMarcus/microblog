@@ -15,8 +15,6 @@ from flask_bootstrap import Bootstrap
 from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 from app.config import ProdConfig, RequestFormatter
 
-
-metrics = None
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
@@ -25,6 +23,11 @@ login.login_message = 'Please log in to access this page.'
 bootstrap = Bootstrap()
 moment = Moment()
 
+def init_metrics(app):
+    if os.getenv("PROMETHEUS_MULTIPROC_DIR") and not app.testing:
+        metrics = GunicornInternalPrometheusMetrics.for_app_factory()
+        metrics.init_app(app)
+        metrics.start_http_server = False
 
 
 def create_app(config_class=ProdConfig):
@@ -38,7 +41,6 @@ def create_app(config_class=ProdConfig):
         os.getenv("PROMETHEUS_MULTIPROC_DIR")
         and not app.testing
     ):
-        global metrics
         metrics = GunicornInternalPrometheusMetrics.for_app_factory()
         metrics.init_app(app)
         metrics.start_http_server = False
@@ -67,6 +69,8 @@ def create_app(config_class=ProdConfig):
         )
         default_handler.setFormatter(formatter)
         app.logger.setLevel(logging.INFO)
+
+    init_metrics(app)
 
     return app
 
