@@ -1,33 +1,4 @@
 ---
-- name: Update apt cache
-  apt:
-    update_cache: yes
-
-# ----------------------------
-# INSTALL DOCKER
-# ----------------------------
-- name: Install Docker
-  apt:
-    name:
-      - docker.io
-      - python3-docker
-    state: present
-
-- name: Ensure Docker service is running
-  service:
-    name: docker
-    state: started
-    enabled: yes
-
-# ----------------------------
-# USER PERMISSIONS FIX
-# ----------------------------
-- name: Add deploy user to docker group
-  user:
-    name: deploy
-    groups: docker
-    append: yes
-
 # ----------------------------
 # PULL APPLICATION IMAGE
 # ----------------------------

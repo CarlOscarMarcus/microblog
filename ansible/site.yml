@@ -7,6 +7,9 @@
 -   name: Deploy Database
     import_playbook: database.yml
 
+-   name: Setup Docker
+    import_playbook: docker.yml
+
 -   name: Deploy Microblog App
     import_playbook: microblog.yml
 
