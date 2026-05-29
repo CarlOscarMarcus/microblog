@@ -24,6 +24,9 @@ bootstrap = Bootstrap()
 moment = Moment()
 
 def init_metrics(app):
+    """
+    Init prometheus metrics if PROMETHEUS_MULTIPROC_DIR is set and app is not in testing mode
+    """
     if os.getenv("PROMETHEUS_MULTIPROC_DIR") and not app.testing:
         metrics = GunicornInternalPrometheusMetrics.for_app_factory()
         metrics.init_app(app)
