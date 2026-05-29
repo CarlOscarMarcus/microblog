@@ -47,7 +47,8 @@
     src: /etc/nginx/sites-available/load-balancer.conf
     dest: /etc/nginx/sites-enabled/load-balancer.conf
     state: link
-  notify: Restart nginx
+    force: true
+  notify: Reload nginx
 
 # ----------------------------
 # CERTBOT (OPTIONAL)
@@ -81,7 +82,7 @@
 
 - name: Generate SSL certificate
   command: >
-    certbot certonly --standalone --noninteractive --agree-tos
+    certbot certonly --staging --standalone --noninteractive --agree-tos
     --email {{ admin_email }}
     -d {{ domain_name }} -d www.{{ domain_name }}
   when: enable_tls | default(false)

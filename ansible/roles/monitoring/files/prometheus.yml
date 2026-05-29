@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: node-exporter
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ['0.0.0.0:9090']
+        labels:
+          instance: prometheus
+  - job_name: "flask"
+    scheme: https
+    static_configs:
+      - targets:
+          - "osay21.me"
+        labels:
+          instance: flask
+    tls_config:
+      insecure_skip_verify: true

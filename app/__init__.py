@@ -12,10 +12,11 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_moment import Moment
 from flask_bootstrap import Bootstrap
+from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 from app.config import ProdConfig, RequestFormatter
 
 
-
+metrics = GunicornInternalPrometheusMetrics.for_app_factory()
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
@@ -33,6 +34,8 @@ def create_app(config_class=ProdConfig):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    metrics.init_app(app)
+    metrics.start_http_server = False
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
@@ -50,7 +53,6 @@ def create_app(config_class=ProdConfig):
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
     #pylint: enable=wrong-import-position, cyclic-import, import-outside-toplevel
-
 
     if not app.debug and not app.testing:
         formatter = RequestFormatter(
