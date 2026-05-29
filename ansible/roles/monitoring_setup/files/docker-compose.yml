@@ -1,5 +1,6 @@
 networks:
   monitor:
+    external: true
 
 volumes:
   prometheus_data:
@@ -48,8 +49,13 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./dashboards:/etc/grafana/provisioning/dashboards
     networks:
       - monitor
+    environment:
+      - GF_SERVER_DOMAIN=osay21.me
+      - GF_SERVER_ROOT_URL=https://osay21.me/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     ports:
       - "3000:3000"
   

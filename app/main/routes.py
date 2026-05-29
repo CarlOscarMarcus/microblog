@@ -45,7 +45,9 @@ def index():
     return render_template("index.html", title='Home Page', form=form,
                            posts=posts)
 
-
+@bp.route('/test-error')
+def test_error():
+    raise Exception("intentional test error")
 
 @bp.route('/explore')
 @login_required

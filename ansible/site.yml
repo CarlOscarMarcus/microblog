@@ -3,12 +3,11 @@
 -   import_playbook: provision_instances.yml
 -   import_playbook: gather_instances.yml
 -   import_playbook: 10-first-minutes.yml
-
 -   name: Deploy Database
     import_playbook: database.yml
-
 -   name: Deploy Microblog App
     import_playbook: microblog.yml
-
 -   name: Deploy Load Balancer
     import_playbook: deploy_lb.yml
+-   name: Setup Monitoring
+    import_playbook: monitoring.yml

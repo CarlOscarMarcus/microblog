@@ -11,10 +11,14 @@ database.osay21.me
 [loadbalancer]
 loadbalancer.osay21.me
 
+[monitoring]
+monitoring.osay21.me
+
 [devops:children]
 appserver
 database
 loadbalancer
+monitoring
 
 [devops:vars]
 ansible_ssh_private_key_file=~/.ssh/devops
