@@ -16,7 +16,7 @@ from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMet
 from app.config import ProdConfig, RequestFormatter
 
 
-metrics = GunicornInternalPrometheusMetrics.for_app_factory()
+metrics = None
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
@@ -34,8 +34,15 @@ def create_app(config_class=ProdConfig):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    metrics.init_app(app)
-    metrics.start_http_server = False
+    if (
+        os.getenv("PROMETHEUS_MULTIPROC_DIR")
+        and not app.testing
+    ):
+        global metrics
+        metrics = GunicornInternalPrometheusMetrics.for_app_factory()
+        metrics.init_app(app)
+        metrics.start_http_server = False
+
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
