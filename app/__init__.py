@@ -48,6 +48,9 @@ def create_app(config_class=ProdConfig):
 
     @app.after_request
     def track_errors(response):
+        """
+        Track errors and increment error counter
+        """
         if error_counter and response.status_code >= 400:
             error_counter.labels(
                 status_code=str(response.status_code),
@@ -57,6 +60,9 @@ def create_app(config_class=ProdConfig):
 
     @app.errorhandler(Exception)
     def handle_exception(e):
+        """
+        Handle uncaught exceptions and log them
+        """
         if error_counter:
             error_counter.labels(
                 status_code='500',

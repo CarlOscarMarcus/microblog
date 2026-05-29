@@ -47,7 +47,7 @@ def index():
 
 @bp.route('/test-error')
 def test_error():
-    raise Exception("intentional test error")
+    raise RuntimeError("intentional test error")  # more specific exception
 
 @bp.route('/explore')
 @login_required
