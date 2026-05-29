@@ -36,6 +36,7 @@
     name: osay21/microblog
     tag: "{{ microblog_version }}"
     source: pull
+    force_source: yes
 
 # ----------------------------
 # DEPLOY CONTAINER
