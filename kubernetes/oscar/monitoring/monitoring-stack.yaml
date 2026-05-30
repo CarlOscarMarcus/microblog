@@ -22,6 +22,8 @@ spec:
             - "--storage.tsdb.path=/prometheus"
             - "--storage.tsdb.retention.time=24h"
             - "--web.enable-lifecycle"
+            - "--web.external-url=http://osay21.me/prometheus"
+            - "--web.route-prefix=/prometheus"
           ports:
             - containerPort: 9090
           volumeMounts:
@@ -65,6 +67,8 @@ spec:
           image: prom/alertmanager:v0.23.0
           args:
             - "--config.file=/config/alertmanager.yml"
+            - "--web.external-url=http://osay21.me/alertmanager"
+            - "--web.route-prefix=/alertmanager"
           ports:
             - containerPort: 9093
           volumeMounts:

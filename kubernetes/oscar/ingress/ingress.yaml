@@ -4,6 +4,7 @@ metadata:
   name: microblog-ingress
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
 spec:
   ingressClassName: nginx
@@ -12,10 +13,12 @@ spec:
         - osay21.me
         - www.osay21.me
       secretName: microblog-tls
+
   rules:
     - host: osay21.me
       http:
         paths:
+
           - path: /grafana
             pathType: Prefix
             backend:
@@ -23,6 +26,23 @@ spec:
                 name: grafana-external
                 port:
                   number: 3000
+
+          - path: /prometheus(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090
+
+          - path: /alertmanager(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: alertmanager
+                port:
+                  number: 9093
+
           - path: /
             pathType: Prefix
             backend:
@@ -30,6 +50,7 @@ spec:
                 name: microblog-service
                 port:
                   number: 80
+
     - host: www.osay21.me
       http:
         paths:
