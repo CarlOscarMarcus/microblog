@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: node-exporter
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ['0.0.0.0:9090']
+        labels:
+          instance: prometheus
+  - job_name: "flask"
+    static_configs:
+      - targets:
+          - 'appserver1.osay21.me:8000'
+          - 'appserver2.osay21.me:8000'
+        labels:
+          instance: flask
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'alertmanager:9093'
+
+rule_files:
+  - "rules.yml"

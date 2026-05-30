@@ -9,21 +9,24 @@ COPY app app
 COPY migrations migrations
 COPY requirements requirements
 COPY requirements.txt microblog.py boot.sh ./
+COPY gunicorn_config.py gunicorn_config.py
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 ENV FLASK_APP=microblog.py
 
 RUN <<-EOF
-    chmod +x boot.sh
-    chown -R microblog:microblog ./
+  chmod +x boot.sh
+  chown -R microblog:microblog ./
+  mkdir -p /tmp/prometheus_multiproc
+  chown -R microblog:microblog /tmp/prometheus_multiproc
 EOF
 
 USER microblog
 
-EXPOSE 5000
+ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
+EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget -qO- http://127.0.0.1:5000/ || exit 1
-
 ENTRYPOINT ["./boot.sh"]

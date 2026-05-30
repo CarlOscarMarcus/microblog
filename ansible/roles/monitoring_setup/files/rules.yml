@@ -1,0 +1,37 @@
+groups:
+  - name: flask_alerts
+    rules:
+      - alert: FlaskHighErrorRate
+        expr: rate(flask_http_request_total{status=~"5.."}[1m]) > 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx errors detected on Flask app"
+          description: "Error rate: {{ $value }} req/s on {{ $labels.instance }}"
+
+      - alert: Flask404Spike
+        expr: rate(flask_http_request_total{status="404"}[5m]) > 0.05
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "404 spike detected"
+          description: "404 rate: {{ $value }} req/s"
+
+      - alert: FlaskAppDown
+        expr: up{job="flask"} == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Flask app is down"
+          description: "Instance {{ $labels.instance }} is not responding"
+
+      - alert: MoreGetRequestsThan20
+        expr: flask_http_request_total{method="GET",status="200"} > 20 and flask_http_request_total{method="GET",status="200"} < 25
+        for: 10s
+        labels:
+          severity: info
+        annotations:
+          summary: "GET request count between 20 and 25"

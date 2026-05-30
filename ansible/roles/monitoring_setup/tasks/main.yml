@@ -1,0 +1,107 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Docker
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+    state: present
+
+- name: Create docker cli-plugins directory
+  file:
+    path: /usr/local/lib/docker/cli-plugins
+    state: directory
+    mode: '0755'
+
+- name: Install Docker Compose v2
+  get_url:
+    url: https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64
+    dest: /usr/local/lib/docker/cli-plugins/docker-compose
+    mode: '0755'
+    force: false
+
+- name: Ensure Docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add deploy user to docker group
+  user:
+    name: deploy
+    groups: docker
+    append: yes
+
+- name: Create monitoring directory
+  file:
+    path: /opt/monitoring
+    state: directory
+    mode: '0755'
+
+- name: Copy dashboards
+  copy:
+    src: dashboards/
+    dest: /opt/monitoring/dashboards/
+
+- name: Copy docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: /opt/monitoring/docker-compose.yml
+
+- name: Copy prometheus.yml
+  copy:
+    src: prometheus.yml
+    dest: /opt/monitoring/prometheus.yml
+
+- name: Copy rules.yml
+  copy:
+    src: rules.yml
+    dest: /opt/monitoring/rules.yml
+
+- name: Copy alertmanager.yml
+  copy:
+    src: alertmanager.yml
+    dest: /opt/monitoring/alertmanager.yml
+
+# ← add this before the compose step
+- name: Create monitoring docker network
+  community.docker.docker_network:
+    name: monitor
+    state: present
+
+- name: Start monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+    pull: always
+
+- name: Wait for Prometheus
+  uri:
+    url: http://localhost:9090/-/ready
+    status_code: 200
+  retries: 10
+  delay: 5
+  register: result
+  until: result.status == 200
+
+- name: Wait for Grafana
+  uri:
+    url: http://localhost:3000/api/health
+    status_code: 200
+  retries: 10
+  delay: 5
+  register: result
+  until: result.status == 200
+
+- name: Add Prometheus datasource to Grafana
+  community.grafana.grafana_datasource:
+    name: Prometheus
+    ds_type: prometheus
+    ds_url: http://prometheus:9090
+    access: proxy
+    is_default: true
+    grafana_url: http://localhost:3000
+    grafana_user: admin
+    grafana_password: admin
