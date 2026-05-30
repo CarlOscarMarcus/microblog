@@ -47,6 +47,9 @@ def index():
 
 @bp.route('/test-error')
 def test_error():
+    """
+    Route to intentionally raise an error for testing error tracking
+    """
     raise RuntimeError("intentional test error")  # more specific exception
 
 @bp.route('/explore')
