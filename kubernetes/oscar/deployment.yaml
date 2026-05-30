@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microblog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: microblog
+  template:
+    metadata:
+      labels:
+        app: microblog
+    spec:
+      containers:
+        - name: microblog
+          image: osay21/microblog:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_APP
+              value: microblog.py
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: microblog-secrets
+                  key: database-url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: microblog-secrets
+                  key: secret-key
