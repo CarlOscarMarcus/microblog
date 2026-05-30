@@ -13,7 +13,9 @@ from flask_moment import Moment
 from flask_bootstrap import Bootstrap
 from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 from prometheus_client import Counter
+from werkzeug.exceptions import HTTPException, MethodNotAllowed
 from app.config import ProdConfig, RequestFormatter
+
 
 
 metrics = None
@@ -60,15 +62,18 @@ def create_app(config_class=ProdConfig):
 
     @app.errorhandler(Exception)
     def handle_exception(e):
-        """
-        Handle uncaught exceptions and log them
-        """
+        if isinstance(e, HTTPException):
+            return e
+
+        if isinstance(e, MethodNotAllowed):
+            return e
+
         if error_counter:
             error_counter.labels(
                 status_code='500',
                 endpoint=request.endpoint or 'unknown'
             ).inc()
-        app.logger.error(f"Unhandled exception: {e}", exc_info=True)
+        app.logger.error("Unhandled exception: %s", e, exc_info=True)
         return "Internal Server Error", 500
 
     db.init_app(app)
@@ -96,6 +101,5 @@ def create_app(config_class=ProdConfig):
         app.logger.setLevel(logging.INFO)
 
     return app
-
 
 from app import models #pylint: disable=wrong-import-position, cyclic-import, import-outside-toplevel
