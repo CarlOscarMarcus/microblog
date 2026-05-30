@@ -1,0 +1,220 @@
+# Prometheus
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.31.1
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=24h"
+            - "--web.enable-lifecycle"
+            - "--web.external-url=http://osay21.me/prometheus"
+            - "--web.route-prefix=/prometheus"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+# Alertmanager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.23.0
+          args:
+            - "--config.file=/config/alertmanager.yml"
+            - "--web.external-url=http://osay21.me/alertmanager"
+            - "--web.route-prefix=/alertmanager"
+          ports:
+            - containerPort: 9093
+          volumeMounts:
+            - name: config
+              mountPath: /config/alertmanager.yml
+              subPath: alertmanager.yml
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+            items:
+              - key: alertmanager.yml
+                path: alertmanager.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+spec:
+  selector:
+    app: alertmanager
+  ports:
+    - port: 9093
+      targetPort: 9093
+---
+# Node Exporter (DaemonSet - runs on every node)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      hostPID: true
+      hostIPC: true
+      hostNetwork: true
+      containers:
+        - name: node-exporter
+          image: prom/node-exporter:v1.2.2
+          args:
+            - "--path.procfs=/host/proc"
+            - "--path.rootfs=/rootfs"
+            - "--path.sysfs=/host/sys"
+            - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+          ports:
+            - containerPort: 9100
+              hostPort: 9100
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: rootfs
+              mountPath: /rootfs
+              readOnly: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: rootfs
+          hostPath:
+            path: /
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  selector:
+    app: node-exporter
+  ports:
+    - port: 9100
+      targetPort: 9100
+---
+# Grafana
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:8.2.4
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SERVER_DOMAIN
+              value: osay21.me
+            - name: GF_SERVER_ROOT_URL
+              value: https://osay21.me/grafana/
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "true"
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: dashboard-provisioning
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboards
+              mountPath: /etc/grafana/provisioning/dashboards/files
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+      volumes:
+        - name: grafana-storage
+          emptyDir: {}
+        - name: dashboard-provisioning
+          configMap:
+            name: grafana-dashboard-provisioning
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
